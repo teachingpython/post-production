@@ -11,6 +11,7 @@ repository = "https://github.com/teachingpython/post-production"
 python = "^3.9"
 requests = "^2.26.0"
 click = "^8.0.1"
+python-dotenv = "^0.18.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

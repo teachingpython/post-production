@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 import click
+from dotenv import load_dotenv
 
 from post_production.dolby import DolbyIO, JobType
 
@@ -17,15 +18,22 @@ log_dir.mkdir(parents=True, exist_ok=True)
 @click.option("analyze", "--analyze", "-a", is_flag=True, default=False)
 @click.option("analyze_speech", "--analyze-speech", is_flag=True, default=False)
 def process(infile, output, analyze, analyze_speech):
+    banner()
     infile = Path(infile)
     logging.basicConfig(
         filename=log_dir / f"job_logs_{infile.name}.log", level=logging.INFO
     )
 
     # Make sure we have a valid Dolby API key
+    load_dotenv()
     API_KEY = get_api_key()
-    os.environ["DOLBY_API_KEY"] = API_KEY
     dolby = DolbyIO(API_KEY)
+
+    if not click.confirm(
+        f"Are you ready to upload {infile.name}? You may incur costs.", default=True
+    ):
+        click.echo("Aborting. Goodbye")
+        return
 
     click.echo(f"Uploading {infile}...")
     in_url = dolby.upload(infile)
@@ -77,3 +85,17 @@ def get_api_key() -> str:
 
     click.echo("This tool requires a valid API key for Dolby.io.")
     return click.prompt("Enter your Dolby.io API key")
+
+
+def banner():
+    click.echo(
+        """┌──────────────────────────────┐
+│                              │
+│    Dolby Audio Processing    │
+│  by Teaching Python Podcast  │
+│                              │
+├──────────────────────────────┤
+│      teachingpython.fm       │
+│           @smtibor           │
+└──────────────────────────────┘"""
+    )
