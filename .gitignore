@@ -1,0 +1,6 @@
+.python-version
+*.flac
+*.mp3
+*.wav
+*.pyc
+.env
