@@ -24,6 +24,7 @@ def process(infile, output, analyze, analyze_speech):
 
     # Make sure we have a valid Dolby API key
     API_KEY = get_api_key()
+    os.environ["DOLBY_API_KEY"] = API_KEY
     dolby = DolbyIO(API_KEY)
 
     click.echo(f"Uploading {infile}...")

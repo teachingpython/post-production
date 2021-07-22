@@ -3,10 +3,11 @@ import os
 import shutil
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 from urllib.parse import quote, unquote
 
 import requests
+from requests.models import InvalidURL
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,20 @@ class JobType(Enum):
     SPEECH_ANALYZE = "analyze/speech"
     UPLOAD = "input"
     DOWNLOAD = "output"
+
+
+CONTENT_TYPES = {
+    "conference",
+    "interview",
+    "lecture",
+    "meeting",
+    "mobile_phone",
+    "music",
+    "podcast",
+    "studio",
+    "voice_over",
+    "voice_recording",
+}
 
 
 class DolbyIO:
@@ -75,26 +90,80 @@ class DolbyIO:
         logger.info(f"Uploaded {file_path.name} to {in_url}")
         return in_url
 
-    def enhance(self, in_url: str, out_url: Optional[str] = None) -> Tuple[str, str]:
+    def enhance(
+        self,
+        in_url: str,
+        out_url: Optional[str] = None,
+        loudness: bool = True,
+        loudness_target: float = -23.0,
+        dialog_intelligence: bool = True,
+        dynamic_range_control: bool = True,
+        dynamic_range_control_amount: str = "medium",
+        noise_reduction: bool = True,
+        noise_reduction_amount: str = "auto",
+        dynamic_eq: bool = True,
+        high_pass_filter: bool = True,
+        content_type: str = "interview",
+    ) -> Tuple[str, str]:
         """Process an uploaded url and return a file once completed
 
         Args:
             in_url (str): path to Dolby-compatible file. Can be a Dolby Input file or other S3-compatible storage links
+            out_url (Optional[str], optional): Optional path to destination url. If not provided, it will attempt to generate a dolby output url
+            loudness (bool, optional): Enable loudness correction. Defaults to True.
+            loudness_target (float, optional): Target loudness level. Defaults to -23.0.
+            dialog_intelligence (bool, optional): Use voice gating for loudness. Defaults to True.
+            dynamic_range_control (bool, optional): Enable Dynamic Range control. Defaults to True.
+            dynamic_range_control_amount (str, optional): Amount of Dynamic Range control to apply. Defaults to "medium".
+            noise_reduction (bool, optional): Enable Noise Reduction. Defaults to True.
+            noise_reduction_amount (str, optional): Amount to apply. Defaults to "auto".
+            dynamic_eq (bool, optional): Enable Dynamic EQ filtering. Defaults to True.
+            high_pass_filter (bool, optional): Enable High Pass filtering. Defaults to True.
+            content_type (str, optional): Set content type for processing. Defaults to "interview".
+
+        Raises:
+            InvalidURL: If a valid output url cannot be generated
+            ValueError: Checks for valid content types
 
         Returns:
-            str: path to processed file
+            Tuple[str, str]: A tuple of the job-id and output url
         """
-        out_url = in_url.replace("dlb://in/", "dlb://out/")
+
+        if in_url.startswith("dlb://"):
+            out_url = in_url.replace("dlb://in/", "dlb://out/")
+        elif not out_url:
+            raise InvalidURL(
+                "in_url is not a Dolby-provided URL and an out_url was not provided."
+            )
+
+        if content_type not in CONTENT_TYPES:
+            raise ValueError(
+                f'Content type must be a valid type for dolby.io. "{content_type}" is not valid.'
+            )
 
         body = {
-            "content": {"type": "interview"},
+            "content": {"type": content_type},
             "audio": {
-                "loudness": {"enable": True, "dialog_intelligence": True},
-                "dynamics": {"range_control": {"enable": True}},
-                "noise": {"reduction": {"enable": True}},
+                "loudness": {
+                    "enable": loudness,
+                    "dialog_intelligence": dialog_intelligence,
+                    "target_level": loudness_target,
+                },
+                "dynamics": {
+                    "range_control": {
+                        "enable": dynamic_range_control,
+                        "amount": dynamic_range_control_amount,
+                    }
+                },
+                "noise": {
+                    "reduction": {
+                        "enable": noise_reduction,
+                        "amount": noise_reduction_amount,
+                    }
+                },
                 "filter": {
-                    "dynamic_eq": {"enable": True},
-                    "high_pass": {"enable": True},
+                    "dynamic_eq": {"enable": dynamic_eq},
+                    "high_pass": {"enable": high_pass_filter},
                 },
             },
             "input": in_url,
