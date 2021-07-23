@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "post-production"
-version = "0.2.0"
+version = "0.2.1"
 description = "A pipeline for post-production of the Teaching Python podcast"
 authors = ["Sean Tibor <40579452+seantibor@users.noreply.github.com>"]
 license = "MIT"
@@ -8,12 +8,13 @@ readme = "README.md"
 repository = "https://github.com/teachingpython/post-production"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.8"
 requests = "^2.26.0"
-click = "^8.0.1"
 python-dotenv = "^0.18.0"
 tabulate = "^0.8.9"
 ffmpeg-python = "^0.2.0"
+typer = "^0.3.2"
+click-spinner = "^0.1.10"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
@@ -27,4 +28,4 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-tppp = "post_production.main:cli"
+tppp = "post_production.main:app"
