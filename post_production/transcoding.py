@@ -1,19 +1,27 @@
 import logging
 from pathlib import Path
+from typing import Optional
 
-import click
 import ffmpeg
+import typer
+
+from post_production.main import app
 
 logger = logging.getLogger(__name__)
 
 
-@click.command()
-@click.argument("input_file", type=click.Path(exists=True))
-@click.option("output_file", "--output", "-o", type=click.Path())
-@click.option("intro_music", "--intro", type=click.Path(exists=True))
-@click.option("outro_music", "--outro", type=click.Path(exists=True))
+@app.command()
 def transcode(
-    input_file: str, output_file: str, intro_music: str = None, outro_music: str = None
+    input_file: Path = typer.Argument(..., exists=True),
+    output_file: Optional[Path] = typer.Option(
+        None, help="Path to output file location"
+    ),
+    intro_music: Optional[str] = typer.Option(
+        None, help="Intro music to add before file."
+    ),
+    outro_music: Optional[str] = typer.Option(
+        None, help="Outro music to add after file."
+    ),
 ):
     main_episode = ffmpeg.input(input_file)
     if intro_music:

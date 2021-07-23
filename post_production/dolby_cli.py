@@ -3,43 +3,44 @@ import os
 import time
 from pathlib import Path
 
-import click
+import typer
 
 from post_production.dolby import DolbyIO, JobType
+from post_production.main import app
 
 
-@click.command()
-@click.argument("infile", type=click.Path())
-@click.option("output", "--output", "-o", default=None, type=click.Path())
-@click.option("analyze", "--analyze", "-a", is_flag=True, default=False)
-@click.option("analyze_speech", "--analyze-speech", is_flag=True, default=False)
-def enhance(infile, output, analyze, analyze_speech):
+@app.command()
+def enhance(
+    infile: Path = typer.Argument(..., help="Input file"),
+    output: Path = typer.Option(None, help="Output file."),
+    analyze: bool = typer.Option(False, help="Analyze audio"),
+    analyze_speech: bool = typer.Option(False, help="Use Dolby speech analysis."),
+):
     banner()
-    infile = Path(infile)
 
     # Make sure we have a valid Dolby API key
     API_KEY = get_dolby_key()
     dolby = DolbyIO(API_KEY)
 
-    if not click.confirm(
+    if not typer.confirm(
         f"Are you ready to upload {infile.name}? You may incur costs.", default=True
     ):
-        click.echo("Aborting. Goodbye")
+        typer.echo("Aborting. Goodbye")
         return
 
-    click.echo(f"Uploading {infile}...")
+    typer.echo(f"Uploading {infile}...")
     in_url = dolby.upload(infile)
 
     if analyze:
-        click.echo(f"Analyzing {in_url}...")
+        typer.echo(f"Analyzing {in_url}...")
         job_id, out_url = dolby.analyze(in_url)
         job_type = JobType.ANALYZE
     elif analyze_speech:
-        click.echo(f"Analyzing speech in {in_url}...")
+        typer.echo(f"Analyzing speech in {in_url}...")
         job_id, out_url = dolby.analyze(in_url, speech=True)
         job_type = JobType.SPEECH_ANALYZE
     else:
-        click.echo(f"Processing {in_url}...")
+        typer.echo(f"Processing {in_url}...")
         job_id, out_url = dolby.enhance(in_url)
         job_type = JobType.ENHANCE
 
@@ -49,13 +50,13 @@ def enhance(infile, output, analyze, analyze_speech):
         out_path = Path(output)
     else:
         out_path = infile.parent / "output"
-    click.echo(f"Downloading file from {out_url} to {out_path}")
+    typer.echo(f"Downloading file from {out_url} to {out_path}")
     file_path = dolby.download(out_url=out_url, out_path=out_path, job_type=job_type)
-    click.echo(f"File {infile} processed and saved to {file_path}")
+    typer.echo(f"File {infile} processed and saved to {file_path}")
 
 
 def banner():
-    click.echo(
+    typer.echo(
         """┌──────────────────────────────┐
 │                              │
 │    Dolby Audio Processing    │
@@ -73,14 +74,14 @@ def get_dolby_key() -> str:
         # Key already set. Do nothing.
         return os.environ["DOLBY_API_KEY"]
 
-    click.echo("This tool requires a valid API key for Dolby.io.")
-    return click.prompt("Enter your Dolby.io API key")
+    typer.echo("This tool requires a valid API key for Dolby.io.")
+    return typer.prompt("Enter your Dolby.io API key")
 
 
 def display_status(dolby, job_id, job_type):
     status, pct = dolby.get_status(job_id, job_type=job_type)
     last_pct = 0
-    with click.progressbar(
+    with typer.progressbar(
         length=100, label="Processing file", show_percent=True
     ) as bar:
         while pct < 100:
