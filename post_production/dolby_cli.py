@@ -3,13 +3,12 @@ import os
 import time
 from pathlib import Path
 
+import click_spinner
 import typer
 
 from post_production.dolby import DolbyIO, JobType
-from post_production.main import app
 
 
-@app.command()
 def enhance(
     infile: Path = typer.Argument(..., help="Input file"),
     output: Path = typer.Option(None, help="Output file."),
@@ -29,7 +28,8 @@ def enhance(
         return
 
     typer.echo(f"Uploading {infile}...")
-    in_url = dolby.upload(infile)
+    with click_spinner.spinner():
+        in_url = dolby.upload(infile)
 
     if analyze:
         typer.echo(f"Analyzing {in_url}...")

@@ -10,12 +10,10 @@ import typer
 from tabulate import tabulate
 
 from post_production.assembly_ai import AssemblyAI, TranscriptResult
-from post_production.main import app
 
 logger = logging.getLogger(__name__)
 
 
-@app.command()
 def transcribe(input_file: Path = typer.Argument(..., exists=True)):
     assembly_banner()
 
