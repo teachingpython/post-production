@@ -14,9 +14,11 @@ but eventually want to turn this into an automated pipeline of tasks.
     - Speaker labeling
     - Word boosting
     - Job status polling
+- Local transcoding using ffmpeg to mp3 format
+    - requires [ffmpeg](http://ffmpeg.org/) on the local machine
+    - allows intro and outro music to be added
 ## Planned Features
 - S3-compatible storage
-- Local transcoding using ffmpeg to mp3 format
 - Webhook callbacks to avoid job status polling
 
 ## Example
@@ -27,6 +29,16 @@ Note: This project uses poetry and assumes you have it installed. [Directions](h
 1. Clone or download the project from the repository
 1. `poetry install`
 1. `poetry run tppp INPUTFILE`
+
+## Usage
+
+```
+$ tppp enhance input.mp3
+
+$ tppp transcode input.mp3 --intro-music intro.mp3 --outro-music outro.mp3
+
+$ tppp transcribe input.mp3
+```
 ## Configuration
 ### Dolby.io API key
 This project requires a [Dolby.io](https://dolby.io/) API key. You can get one for free from [here](https://dolby.io/signup). As of July 2021, they are offering 200 free minutes of media processing per month.

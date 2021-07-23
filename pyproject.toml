@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "post-production"
-version = "0.2.1"
+version = "0.2.2"
 description = "A pipeline for post-production of the Teaching Python podcast"
 authors = ["Sean Tibor <40579452+seantibor@users.noreply.github.com>"]
 license = "MIT"
