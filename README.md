@@ -47,4 +47,4 @@ You can set your API key as an environment variable ('DOLBY_API_KEY') or in a .e
 ### AssemblyAI API key
 This project requires an [AssemblyAI](https://app.assembly.ai) API key. You can get one for free from [here](https://app.assemblyai.com/login/). As of July 2021, they are offering the first 5 hours of transcription for free.
 
-You can set your API key as an environment variable ('DOLBY_API_KEY') or in a .env file at the root of the project.
+You can set your API key as an environment variable ('ASSEMBLY_AI_KEY') or in a .env file at the root of the project.
