@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import click_spinner
 import typer
@@ -14,15 +14,42 @@ from post_production.assembly_ai import AssemblyAI, TranscriptResult
 logger = logging.getLogger(__name__)
 
 
-def transcribe(input_file: Path = typer.Argument(..., exists=True)):
+def transcribe(
+    auto_chapters: bool = typer.Option(
+        False,
+        "--chapters",
+        "-c",
+        help="Create automatic chapter markers and summaries",
+        prompt="Create chapters automatically?",
+    ),
+    auto_highlights: bool = typer.Option(
+        False,
+        "--highlights",
+        "-h",
+        help="Create automatic highlights and keywords",
+        prompt="Create highlights?",
+    ),
+    filler_words: bool = typer.Option(
+        False, "--disfluencies", "-d", prompt="Include filler words (um, uh, etc)?"
+    ),
+    audio_file: Optional[Path] = typer.Option(None, "--file", "-f", exists=True),
+    audio_url: Optional[str] = typer.Option(None, "--url", "-u"),
+):
     assembly_banner()
 
-    infile = Path(input_file)
     api_key = get_assemblyai_key()
     client = AssemblyAI(api_key)
 
-    typer.echo(f"Uploading {infile.name} to AssemblyAI")
-    audio_url = client.upload(infile)
+    if audio_file:
+        typer.echo(f"Uploading {audio_file.name} to AssemblyAI")
+        audio_url = client.upload(audio_file)
+        output_dir = audio_file.parent
+        output_file_stem = audio_file.stem
+    elif not audio_url:
+        logger.error("No input file or url provided")
+    else:
+        output_dir = Path.cwd()
+        output_file_stem = "Output File"
 
     if typer.confirm("Do you want to add a list of priority words? ", default=True):
         word_list = get_word_list()
@@ -31,8 +58,35 @@ def transcribe(input_file: Path = typer.Argument(..., exists=True)):
 
     typer.echo(f"Beginning transcription job.")
     job_id = client.transcribe(
-        audio_url=audio_url, speaker_labels=True, word_boost=word_list
+        audio_url=audio_url,
+        speaker_labels=True,
+        word_boost=word_list,
+        auto_highlights=auto_highlights,
+        auto_chapters=auto_chapters,
+        disfluencies=filler_words,
     )
+    retrieve_result(
+        client=client,
+        job_id=job_id,
+        output_dir=output_dir,
+        output_file_stem=output_file_stem,
+    )
+
+
+def retrieve(
+    job_id: str = typer.Argument(...), output: Path = typer.Option(..., exists=False)
+):
+    assembly_banner()
+
+    api_key = get_assemblyai_key()
+    client = AssemblyAI(api_key)
+    output_dir = output.parent
+    output_stem = output.stem
+
+    retrieve_result(client, job_id, output_dir=output_dir, output_file_stem=output_stem)
+
+
+def retrieve_result(client, job_id, output_dir, output_file_stem):
     result = client.result(job_id)
     typer.echo(f"Job {result.get('id')}: {result.get('status')}")
     with click_spinner.spinner():
@@ -41,14 +95,17 @@ def transcribe(input_file: Path = typer.Argument(..., exists=True)):
             result = client.result(job_id)
 
     if result.get("status") == "completed":
-        out_path = infile.parent / Path(infile.stem + ".json")
+        out_path = output_dir.parent / Path(output_file_stem + ".json")
         save_json(out_path, result)
+
+    if result.get("status") == "error":
+        print(result)
 
     typer.echo(f"Transcript JSON saved to output directory")
     if typer.prompt("Would you like to generate a plain-text transcript?"):
         transcript = TranscriptResult(**result)
         text_transcript = transcript.as_txt(prompt_speaker_labels=True)
-        out_path = infile.parent / (infile.stem + " - transcript.txt")
+        out_path = output_dir / (output_file_stem + " - transcript.txt")
         typer.echo(f"Writing transcript to {out_path}")
         with out_path.open("w") as outfile:
             outfile.write(text_transcript)

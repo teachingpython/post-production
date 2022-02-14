@@ -39,6 +39,17 @@ $ tppp transcode input.mp3 --intro-music intro.mp3 --outro-music outro.mp3
 
 $ tppp transcribe input.mp3
 ```
+
+## Process
+
+### Workflow Steps
+
+1. Merge multiple recording channels into single WAV file
+1. Enhance audio using Dolby.io
+1. Transcribe audio using Assembly AI
+    1. Include filler words for automatic removal from audio
+    1. Include chapter markers for MP3
+    1. 
 ## Configuration
 ### Dolby.io API key
 This project requires a [Dolby.io](https://dolby.io/) API key. You can get one for free from [here](https://dolby.io/signup). As of July 2021, they are offering 200 free minutes of media processing per month.

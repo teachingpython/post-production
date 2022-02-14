@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "post-production"
-version = "0.2.5"
+version = "0.2.9"
 description = "A pipeline for post-production of the Teaching Python podcast"
 authors = ["Sean Tibor <40579452+seantibor@users.noreply.github.com>"]
 license = "MIT"
@@ -15,6 +15,11 @@ tabulate = "^0.8.9"
 ffmpeg-python = "^0.2.0"
 typer = "^0.3.2"
 click-spinner = "^0.1.10"
+spacy = "^3.1.4"
+tqdm = "^4.62.3"
+pydub = "^0.25.1"
+alive-progress = "^2.1.0"
+toml = "^0.10.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

@@ -13,8 +13,11 @@ def transcode(
     output_file: Optional[Path] = typer.Option(
         None, help="Path to output file location"
     ),
-    normalize: Optional[bool] = typer.Option(False, help="Normalize the audio file"),
-    normalization_level: Optional[int] = typer.Option(
+    normalize: bool = typer.Option(False, help="Normalize the audio file"),
+    dynamic_normalize: Optional[bool] = typer.Option(
+        False, help="Use dynamic normalization"
+    ),
+    normalization_level: int = typer.Option(
         19,
         help="Normalization (in LUFS). '16' will result in -16 LUFS. defaults to -19 LUFS",
     ),
@@ -27,6 +30,18 @@ def transcode(
 ):
 
     main_episode = ffmpeg.input(input_file)
+    if normalize:
+        n = -normalization_level
+        logger.info(f"Normalizing with level {n} LUFS.")
+        typer.echo(f"Normalizing with level {n} LUFS.")
+        main_episode = main_episode.filter("loudnorm", i=n, dual_mono="true")
+
+    if dynamic_normalize:
+        n = -normalization_level
+        logger.info(f"Dynamic normalizing")
+        typer.echo(f"Dynamic normalizing")
+        main_episode = main_episode.filter("dynaudnorm")
+
     if intro_music:
         logger.info(f"Adding intro music from {intro_music}")
         intro = ffmpeg.input(intro_music)
@@ -39,12 +54,6 @@ def transcode(
         main_episode = ffmpeg.filter(
             [main_episode, outro], "acrossfade", d=1, c1="nofade", c2="tri"
         )
-
-    if normalize:
-        n = -normalization_level
-        logger.info(f"Normalizing with level {n} LUFS.")
-        typer.echo(f"Normalizing with level {n} LUFS.")
-        main_episode = main_episode.filter("loudnorm", i=n, dual_mono="true")
 
     if output_file:
         output_path = Path(output_file)
