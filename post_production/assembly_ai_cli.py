@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -56,7 +57,7 @@ def transcribe(
     else:
         word_list = []
 
-    typer.echo(f"Beginning transcription job.")
+    typer.echo("Beginning transcription job.")
     job_id = client.transcribe(
         audio_url=audio_url,
         speaker_labels=True,
@@ -121,7 +122,7 @@ def get_assemblyai_key() -> str:
         # Key already set. Do nothing.
         return os.environ["ASSEMBLYAI_API_KEY"]
     typer.echo("This tool requires a valid API key for AssemblyAI.")
-    return typer.prompt("Enter your AssemblyAI API key")
+    return typer.prompt("Enter your AssemblyAI API key", type=str)
 
 
 def get_word_list() -> List[str]:
@@ -149,4 +150,50 @@ def assembly_banner():
 │      teachingpython.fm       │
 │           @smtibor           │
 └──────────────────────────────┘"""
+    )
+
+
+def chapters(input_file: Path = typer.Argument(..., exists=True)):
+
+    with input_file.open() as f:
+        results = json.load(f)
+
+    chapters = results.get("chapters")
+
+    for chapter in chapters:
+        start = chapter.get("start")
+        end = chapter.get("end")
+        typer.echo(chapter.get("headline"))
+        typer.echo(f"From {start} to {end}")
+        typer.echo()
+        typer.echo(chapter.get("summary"))
+        typer.echo("-" * 20)
+
+    typer.echo("RESULTS")
+    highlights = results.get("auto_highlights_result")
+    for highlight in highlights.get("results"):
+        typer.echo(highlight.get("text"))
+
+    with open("chapters.txt", "w") as f:
+        for chapter in chapters:
+            start = timestamp(chapter.get("start"))
+            highlight = chapter.get("headline")
+            f.write(f"{start} {highlight}\n")
+
+
+def timestamp(milliseconds) -> str:
+    # separate seconds and milliseconds
+    s, ms = divmod(milliseconds, 1000)
+
+    # get microseconds for time constructor
+    us = ms * 1000
+
+    # get minutes for time constructor
+    m, s = divmod(s, 60)
+
+    # get hours for time constructor
+    h, m = divmod(m, 60)
+
+    return datetime.time(hour=h, minute=m, second=s, microsecond=us).isoformat(
+        "milliseconds"
     )

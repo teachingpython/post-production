@@ -20,6 +20,7 @@ __version__ = pyproject_toml["tool"]["poetry"]["version"]
 app = typer.Typer()
 app.command()(dolby_cli.enhance)
 app.command()(assembly_ai_cli.transcribe)
+app.command()(assembly_ai_cli.chapters)
 app.command()(transcoding.transcode)
 app.command()(assembly_ai_cli.retrieve)
 
