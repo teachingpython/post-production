@@ -17,7 +17,7 @@ A command-line pipeline for automating post-production of the [Teaching Python](
 ## Requirements
 
 - Python 3.13+
-- [Poetry](https://python-poetry.org/docs/#installation)
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
 - [ffmpeg](http://ffmpeg.org/) installed locally (for transcoding)
 - AWS credentials configured (for S3 presigned URL features)
 
@@ -26,12 +26,12 @@ A command-line pipeline for automating post-production of the [Teaching Python](
 ```bash
 git clone https://github.com/teachingpython/post-production.git
 cd post-production
-poetry install
+uv sync
 ```
 
 ## Configuration
 
-Create a `.env` file in the project root (or set these as environment variables):
+Create a `.env` file in the project root (or copy from `.env.example`):
 
 ```dotenv
 DOLBY_API_KEY=your_dolby_api_key
@@ -48,8 +48,8 @@ The CLI loads `.env` automatically via `python-dotenv`. If a key is missing at r
 All commands are accessed through the `tppp` CLI entry point.
 
 ```bash
-poetry run tppp --help
-poetry run tppp --version
+uv run tppp --help
+uv run tppp --version
 ```
 
 ### `enhance` — Dolby.io Audio Processing
@@ -58,19 +58,19 @@ Enhance, analyze, or speech-analyze an audio file through Dolby.io.
 
 ```bash
 # Enhance a local file (uploads, processes, downloads result)
-poetry run tppp enhance episode.wav
+uv run tppp enhance episode.wav
 
 # Enhance with a custom output path
-poetry run tppp enhance episode.wav --output enhanced/
+uv run tppp enhance episode.wav --output enhanced/
 
 # Analyze audio quality
-poetry run tppp enhance episode.wav --analyze
+uv run tppp enhance episode.wav --analyze
 
 # Analyze speech characteristics
-poetry run tppp enhance episode.wav --analyze-speech
+uv run tppp enhance episode.wav --analyze-speech
 
 # Use a pre-uploaded URL instead of a local file
-poetry run tppp enhance --in-url "dlb://in/episode.wav"
+uv run tppp enhance --in-url "dlb://in/episode.wav"
 ```
 
 | Option             | Description                                       |
@@ -88,13 +88,13 @@ Transcribe audio with optional chapters, highlights, and filler word detection.
 
 ```bash
 # Transcribe a local file
-poetry run tppp transcribe --file episode.wav
+uv run tppp transcribe --file episode.wav
 
 # Transcribe from a URL
-poetry run tppp transcribe --url "https://example.com/episode.wav"
+uv run tppp transcribe --url "https://example.com/episode.wav"
 
 # With chapters and filler words
-poetry run tppp transcribe --file episode.wav --chapters --disfluencies
+uv run tppp transcribe --file episode.wav --chapters --disfluencies
 ```
 
 | Option               | Description                                       |
@@ -112,7 +112,7 @@ You'll be prompted to optionally add priority words for improved transcription a
 Download results from a previously submitted AssemblyAI job.
 
 ```bash
-poetry run tppp retrieve JOB_ID --output transcript
+uv run tppp retrieve JOB_ID --output transcript
 ```
 
 | Argument/Option | Description                          |
@@ -125,7 +125,7 @@ poetry run tppp retrieve JOB_ID --output transcript
 Parse chapters and highlights from a saved AssemblyAI JSON result.
 
 ```bash
-poetry run tppp chapters result.json
+uv run tppp chapters result.json
 ```
 
 Outputs chapter timestamps, headlines, and summaries to the terminal and writes a `chapters.txt` file.
@@ -136,10 +136,10 @@ Convert audio to MP3 with optional normalization and intro/outro music.
 
 ```bash
 # Basic transcode to MP3
-poetry run tppp transcode episode.wav
+uv run tppp transcode episode.wav
 
 # With normalization and music
-poetry run tppp transcode episode.wav \
+uv run tppp transcode episode.wav \
   --normalize \
   --normalization-level 16 \
   --intro-music intro.mp3 \
@@ -176,18 +176,18 @@ tests/
 ## Development
 
 ```bash
-# Install dev dependencies
-poetry install
+# Install all dependencies (including dev)
+uv sync
 
 # Run tests
-poetry run pytest
+uv run pytest
 
-# Format code
-poetry run black post_production/ tests/
-poetry run isort post_production/ tests/
+# Lint and format
+uv run ruff check --fix post_production/ tests/
+uv run ruff format post_production/ tests/
 
-# Lint
-poetry run flake8 post_production/ tests/
+# Set up pre-commit hooks
+uv run pre-commit install
 ```
 
 ## License

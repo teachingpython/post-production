@@ -6,7 +6,6 @@ import time
 from pathlib import Path
 from typing import List, Optional
 
-import click_spinner
 import typer
 from tabulate import tabulate
 
@@ -46,11 +45,13 @@ def transcribe(
         audio_url = client.upload(audio_file)
         output_dir = audio_file.parent
         output_file_stem = audio_file.stem
-    elif not audio_url:
-        logger.error("No input file or url provided")
-    else:
+    elif audio_url:
         output_dir = Path.cwd()
         output_file_stem = "Output File"
+    else:
+        logger.error("No input file or url provided")
+        typer.echo("Error: You must provide either --file or --url")
+        raise typer.Exit(code=1)
 
     if typer.confirm("Do you want to add a list of priority words? ", default=True):
         word_list = get_word_list()
@@ -90,19 +91,20 @@ def retrieve(
 def retrieve_result(client, job_id, output_dir, output_file_stem):
     result = client.result(job_id)
     typer.echo(f"Job {result.get('id')}: {result.get('status')}")
-    with click_spinner.spinner():
+    with typer.progressbar(length=100, label="Waiting for transcript"):
         while result.get("status") not in ("completed", "error"):
             time.sleep(1)
             result = client.result(job_id)
 
     if result.get("status") == "completed":
-        out_path = output_dir.parent / Path(output_file_stem + ".json")
+        out_path = output_dir / Path(output_file_stem + ".json")
         save_json(out_path, result)
 
     if result.get("status") == "error":
-        print(result)
+        typer.echo(f"Transcription failed: {result}")
+        raise typer.Exit(code=1)
 
-    typer.echo(f"Transcript JSON saved to output directory")
+    typer.echo("Transcript JSON saved to output directory")
     if typer.prompt("Would you like to generate a plain-text transcript?"):
         transcript = TranscriptResult(**result)
         text_transcript = transcript.as_txt(prompt_speaker_labels=True)
@@ -119,7 +121,6 @@ def save_json(file_path: Path, data):
 
 def get_assemblyai_key() -> str:
     if "ASSEMBLYAI_API_KEY" in os.environ:
-        # Key already set. Do nothing.
         return os.environ["ASSEMBLYAI_API_KEY"]
     typer.echo("This tool requires a valid API key for AssemblyAI.")
     return typer.prompt("Enter your AssemblyAI API key", type=str)
@@ -154,13 +155,12 @@ def assembly_banner():
 
 
 def chapters(input_file: Path = typer.Argument(..., exists=True)):
-
     with input_file.open() as f:
         results = json.load(f)
 
-    chapters = results.get("chapters")
+    chapter_list = results.get("chapters")
 
-    for chapter in chapters:
+    for chapter in chapter_list:
         start = chapter.get("start")
         end = chapter.get("end")
         typer.echo(chapter.get("headline"))
@@ -171,27 +171,22 @@ def chapters(input_file: Path = typer.Argument(..., exists=True)):
 
     typer.echo("RESULTS")
     highlights = results.get("auto_highlights_result")
-    for highlight in highlights.get("results"):
-        typer.echo(highlight.get("text"))
+    if highlights:
+        for highlight in highlights.get("results", []):
+            typer.echo(highlight.get("text"))
 
-    with open("chapters.txt", "w") as f:
-        for chapter in chapters:
+    chapters_path = input_file.parent / "chapters.txt"
+    with chapters_path.open("w") as f:
+        for chapter in chapter_list:
             start = timestamp(chapter.get("start"))
-            highlight = chapter.get("headline")
-            f.write(f"{start} {highlight}\n")
+            headline = chapter.get("headline")
+            f.write(f"{start} {headline}\n")
 
 
 def timestamp(milliseconds) -> str:
-    # separate seconds and milliseconds
     s, ms = divmod(milliseconds, 1000)
-
-    # get microseconds for time constructor
     us = ms * 1000
-
-    # get minutes for time constructor
     m, s = divmod(s, 60)
-
-    # get hours for time constructor
     h, m = divmod(m, 60)
 
     return datetime.time(hour=h, minute=m, second=s, microsecond=us).isoformat(

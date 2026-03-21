@@ -1,5 +1,5 @@
-.python-version
 *.flac
+poetry.lock
 *.mp3
 *.wav
 *.pyc

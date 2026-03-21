@@ -1,39 +1,37 @@
-[tool.poetry]
+[project]
 name = "post-production"
 version = "0.2.11"
 description = "A pipeline for post-production of the Teaching Python podcast"
-authors = ["Sean Tibor <40579452+seantibor@users.noreply.github.com>"]
-license = "MIT"
+authors = [
+    { name = "Sean Tibor", email = "40579452+seantibor@users.noreply.github.com" },
+]
+license = { text = "MIT" }
 readme = "README.md"
-repository = "https://github.com/teachingpython/post-production"
+requires-python = ">=3.13"
+dependencies = [
+    "requests>=2.32.0",
+    "python-dotenv>=1.0.0",
+    "tabulate>=0.9.0",
+    "ffmpeg-python>=0.2.0",
+    "typer>=0.15.0",
+    "tqdm>=4.67.0",
+    "pydub>=0.25.1",
+    "alive-progress>=3.2.0",
+    "boto3>=1.35.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.13"
-requests = "^2.26.0"
-python-dotenv = "^0.18.0"
-tabulate = "^0.8.9"
-ffmpeg-python = "^0.2.0"
-typer = "^0.3.2"
-click-spinner = "^0.1.10"
-tqdm = "^4.62.3"
-pydub = "^0.25.1"
-alive-progress = "^2.1.0"
-toml = "^0.10.2"
-boto3 = "^1.20.54"
+[project.urls]
+Repository = "https://github.com/teachingpython/post-production"
 
-[tool.poetry.dev-dependencies]
-pytest = "^5.2"
-rope = "^0.19.0"
-isort = "^5.9.2"
-black = "^21.7b0"
-flake8 = "^3.9.2"
+[project.scripts]
+tppp = "post_production.main:app"
+
+[dependency-groups]
+dev = ["pytest>=8.3.0", "rope>=1.13.0", "ruff>=0.9.0", "pre-commit>=4.1.0"]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
-tppp = "post_production.main:app"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.bandit]
 exclude_dirs = ["tests", ".venv"]

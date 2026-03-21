@@ -4,7 +4,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-import toml
 import typer
 from dotenv import load_dotenv
 
@@ -19,6 +18,8 @@ app.command()(assembly_ai_cli.transcribe)
 app.command()(assembly_ai_cli.chapters)
 app.command()(transcoding.transcode)
 app.command()(assembly_ai_cli.retrieve)
+
+__version__ = importlib.metadata.version("post-production")
 
 
 def version_callback(value: bool):

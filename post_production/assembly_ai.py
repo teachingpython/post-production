@@ -1,11 +1,8 @@
 import logging
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import requests
-from tqdm import tqdm
-from tqdm.utils import CallbackIOWrapper
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +11,7 @@ class AssemblyAI:
     api_endpoint = "https://api.assemblyai.com/v2"
 
     def __init__(self, api_key: str):
-        self.api_key = api_key
+        self._api_key = api_key
         self._session = requests.Session()
         headers = {"authorization": api_key}
         self._session.headers.update(headers)
@@ -29,11 +26,14 @@ class AssemblyAI:
         self,
         audio_url: str,
         speaker_labels: bool = False,
-        word_boost: Optional[List[str]] = [],
+        word_boost: Optional[List[str]] = None,
         auto_chapters: bool = False,
         auto_highlights: bool = True,
         disfluencies: bool = False,
     ):
+        if word_boost is None:
+            word_boost = []
+
         url = self.api_endpoint + "/transcript"
         payload = {
             "audio_url": audio_url,
@@ -47,7 +47,7 @@ class AssemblyAI:
         r = self._session.post(url, json=payload)
         r.raise_for_status()
         data = r.json()
-        logger.info(f"Created job with id {data.get('id')}: {data}")
+        logger.info("Created job with id %s: %s", data.get("id"), data)
         return data.get("id")
 
     def result(self, job_id: str) -> Dict[Any, Any]:
@@ -60,7 +60,7 @@ class AssemblyAI:
 class TranscriptResult:
     def __init__(self, **kwargs):
         for kwarg, value in kwargs.items():
-            self.__setattr__(kwarg, value)
+            setattr(self, kwarg, value)
 
         self.speakers = {}
 
@@ -86,47 +86,9 @@ class TranscriptResult:
 
 
 def read_file(filename, chunk_size=5242880):
-    file_size = os.stat(filename).st_size
     with open(filename, "rb") as _file:
         while True:
             data = _file.read(chunk_size)
             if not data:
                 break
             yield data
-
-
-sample_response = {
-    "id": "c5r2z8wlu-f032-44c2-b288-f870e217db25",
-    "language_model": "assemblyai_default",
-    "acoustic_model": "assemblyai_default",
-    "status": "queued",
-    "audio_url": "https://cdn.assemblyai.com/upload/a111eae3-ce9f-489e-8fa4-a48e5d8ffdad",
-    "text": None,
-    "words": None,
-    "utterances": None,
-    "confidence": None,
-    "audio_duration": None,
-    "punctuate": True,
-    "format_text": True,
-    "dual_channel": None,
-    "webhook_url": None,
-    "webhook_status_code": None,
-    "speed_boost": False,
-    "auto_highlights_result": None,
-    "auto_highlights": False,
-    "audio_start_from": None,
-    "audio_end_at": None,
-    "word_boost": ["sean", "kelly", "python", "schusterparedes", "tibor"],
-    "boost_param": None,
-    "filter_profanity": False,
-    "redact_pii": False,
-    "redact_pii_audio": False,
-    "redact_pii_audio_quality": None,
-    "redact_pii_policies": None,
-    "redact_pii_sub": None,
-    "speaker_labels": True,
-    "content_safety": False,
-    "iab_categories": False,
-    "content_safety_labels": {},
-    "iab_categories_result": {},
-}

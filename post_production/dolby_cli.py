@@ -1,9 +1,7 @@
-import logging
 import os
 import time
 from pathlib import Path
 
-import click_spinner
 import typer
 
 from post_production import aws_helpers
@@ -20,25 +18,27 @@ def enhance(
 ):
     banner()
 
-    # Make sure we have a valid Dolby API key
-    API_KEY = get_dolby_key()
-    dolby = DolbyIO(API_KEY)
-    BUCKET = "teachingpython-podcast"
+    api_key = get_dolby_key()
+    dolby = DolbyIO(api_key)
+    bucket = os.environ.get("S3_BUCKET", "teachingpython-podcast")
 
     if not in_url:
         if not typer.confirm(
-            f"Are you ready to upload {infile.name}? You may incur costs.", default=True
+            f"Are you ready to upload {infile.name}? You may incur costs.",
+            default=True,
         ):
             typer.echo("Aborting. Goodbye")
             return
 
         typer.echo(f"Uploading {infile}...")
-        with click_spinner.spinner():
+        with typer.progressbar(length=1, label="Uploading") as bar:
             in_url = dolby.upload(infile)
+            bar.update(1)
 
-    out_url = aws_helpers.create_presigned_post(
-        "teachingpython-podcast", f"enhanced/{out_url}", expiration=7200
-    ).get("url")
+    presigned = aws_helpers.create_presigned_post(
+        bucket, f"enhanced/{out_url}", expiration=7200
+    )
+    out_url = presigned.get("url")
 
     if analyze:
         typer.echo(f"Analyzing {in_url}...")
@@ -80,7 +80,6 @@ def banner():
 
 def get_dolby_key() -> str:
     if "DOLBY_API_KEY" in os.environ:
-        # Key already set. Do nothing.
         return os.environ["DOLBY_API_KEY"]
 
     typer.echo("This tool requires a valid API key for Dolby.io.")

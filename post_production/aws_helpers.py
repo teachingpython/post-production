@@ -3,11 +3,13 @@ import logging
 import boto3
 from botocore.exceptions import ClientError
 
+logger = logging.getLogger(__name__)
+
 
 def create_presigned_post(
     bucket_name, object_name, fields=None, conditions=None, expiration=3600
 ) -> dict:
-    """Generate a presigned URL S3 POST request to upload a file
+    """Generate a presigned URL S3 POST request to upload a file.
 
     :param bucket_name: string
     :param object_name: string
@@ -17,10 +19,8 @@ def create_presigned_post(
     :return: Dictionary with the following keys:
         url: URL to post to
         fields: Dictionary of form fields and values to submit with the POST
-    :return: None if error.
+    :raises ClientError: If the presigned post generation fails.
     """
-
-    # Generate a presigned S3 POST URL
     s3_client = boto3.client("s3")
     try:
         response = s3_client.generate_presigned_post(
@@ -30,9 +30,10 @@ def create_presigned_post(
             Conditions=conditions,
             ExpiresIn=expiration,
         )
-    except ClientError as e:
-        logging.error(e)
-        return None
+    except ClientError:
+        logger.exception(
+            "Failed to generate presigned post for %s/%s", bucket_name, object_name
+        )
+        raise
 
-    # The response contains the presigned URL and required fields
     return response

@@ -18,7 +18,7 @@ repos:
     hooks:
       - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
-        exclude: 'poetry\.lock'
+        exclude: 'uv\.lock'
 
   # Linting and formatting (replaces black, isort, flake8)
   - repo: https://github.com/astral-sh/ruff-pre-commit

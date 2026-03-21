@@ -38,8 +38,8 @@ def transcode(
 
     if dynamic_normalize:
         n = -normalization_level
-        logger.info(f"Dynamic normalizing")
-        typer.echo(f"Dynamic normalizing")
+        logger.info("Dynamic normalizing")
+        typer.echo("Dynamic normalizing")
         main_episode = main_episode.filter("dynaudnorm")
 
     if intro_music:
