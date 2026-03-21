@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Security Audit & Dependency Check",
+  "description": "Assesses the repository for security issues and outdated dependencies. Proposes changes to pyproject.toml and other dependency files where needed. Creates and maintains pre-commit hooks appropriate for security scanning tools.",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Perform a thorough security audit of this repository:\n\n1. Review pyproject.toml and poetry.lock for outdated or vulnerable dependencies. Propose version updates where needed.\n2. Scan the codebase for common security issues such as hardcoded secrets, insecure API usage, improper input handling, and unsafe file operations.\n3. Check for the presence of a .pre-commit-config.yaml file. If it exists, review and update it. If it doesn't exist, create one with appropriate security scanning hooks including:\n   - Secret detection (e.g. detect-secrets or gitleaks)\n   - Dependency vulnerability scanning (e.g. safety or pip-audit)\n   - Static analysis for security (e.g. bandit)\n   - General code quality checks (e.g. ruff, trailing whitespace, YAML/TOML validation)\n4. Ensure .env files and other sensitive files are listed in .gitignore.\n5. Summarize all findings and proposed changes clearly."
+  }
+}

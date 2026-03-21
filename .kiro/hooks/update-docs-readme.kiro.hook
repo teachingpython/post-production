@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Update Documentation",
+  "description": "Automatically updates README.md documentation when code files are edited. If the README becomes too large, creates additional markdown files in the docs/ folder to keep documentation organized and manageable.",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review the current state of the repository's code and update the README.md to reflect accurate, up-to-date documentation. Include sections such as project overview, setup instructions, usage, configuration, and any relevant API or CLI documentation. If the README.md exceeds roughly 300 lines or becomes unwieldy, split detailed sections into separate markdown files under the docs/ folder (creating it if needed) and link to them from the README. Keep the README concise and well-structured as the primary entry point."
+  }
+}
