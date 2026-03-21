@@ -1,8 +1,11 @@
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import requests
+from tqdm import tqdm
+from tqdm.utils import CallbackIOWrapper
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +30,20 @@ class AssemblyAI:
         audio_url: str,
         speaker_labels: bool = False,
         word_boost: Optional[List[str]] = [],
+        auto_chapters: bool = False,
+        auto_highlights: bool = True,
+        disfluencies: bool = False,
     ):
         url = self.api_endpoint + "/transcript"
         payload = {
             "audio_url": audio_url,
             "speaker_labels": speaker_labels,
             "word_boost": word_boost,
+            "disfluencies": disfluencies,
+            "auto_chapters": auto_chapters,
+            "auto_highlights": auto_highlights,
         }
+
         r = self._session.post(url, json=payload)
         r.raise_for_status()
         data = r.json()
@@ -76,6 +86,7 @@ class TranscriptResult:
 
 
 def read_file(filename, chunk_size=5242880):
+    file_size = os.stat(filename).st_size
     with open(filename, "rb") as _file:
         while True:
             data = _file.read(chunk_size)
