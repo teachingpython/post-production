@@ -6,42 +6,51 @@ from pathlib import Path
 import click_spinner
 import typer
 
+from post_production import aws_helpers
 from post_production.dolby import DolbyIO, JobType
 
 
 def enhance(
-    infile: Path = typer.Argument(..., help="Input file"),
+    infile: Path = typer.Argument(None, help="Input file"),
     output: Path = typer.Option(None, help="Output file."),
     analyze: bool = typer.Option(False, help="Analyze audio"),
     analyze_speech: bool = typer.Option(False, help="Use Dolby speech analysis."),
+    in_url: str = typer.Option(None, help="Input URL for loading file."),
+    out_url: str = typer.Option(None, help="Output object path for saving file."),
 ):
     banner()
 
     # Make sure we have a valid Dolby API key
     API_KEY = get_dolby_key()
     dolby = DolbyIO(API_KEY)
+    BUCKET = "teachingpython-podcast"
 
-    if not typer.confirm(
-        f"Are you ready to upload {infile.name}? You may incur costs.", default=True
-    ):
-        typer.echo("Aborting. Goodbye")
-        return
+    if not in_url:
+        if not typer.confirm(
+            f"Are you ready to upload {infile.name}? You may incur costs.", default=True
+        ):
+            typer.echo("Aborting. Goodbye")
+            return
 
-    typer.echo(f"Uploading {infile}...")
-    with click_spinner.spinner():
-        in_url = dolby.upload(infile)
+        typer.echo(f"Uploading {infile}...")
+        with click_spinner.spinner():
+            in_url = dolby.upload(infile)
+
+    out_url = aws_helpers.create_presigned_post(
+        "teachingpython-podcast", f"enhanced/{out_url}", expiration=7200
+    ).get("url")
 
     if analyze:
         typer.echo(f"Analyzing {in_url}...")
-        job_id, out_url = dolby.analyze(in_url)
+        job_id, out_url = dolby.analyze(in_url, out_url=out_url)
         job_type = JobType.ANALYZE
     elif analyze_speech:
         typer.echo(f"Analyzing speech in {in_url}...")
-        job_id, out_url = dolby.analyze(in_url, speech=True)
+        job_id, out_url = dolby.analyze(in_url, speech=True, out_url=out_url)
         job_type = JobType.SPEECH_ANALYZE
     else:
         typer.echo(f"Processing {in_url}...")
-        job_id, out_url = dolby.enhance(in_url)
+        job_id, out_url = dolby.enhance(in_url, out_url=out_url)
         job_type = JobType.ENHANCE
 
     display_status(dolby, job_id, job_type)

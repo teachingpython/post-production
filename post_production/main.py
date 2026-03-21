@@ -13,10 +13,6 @@ from post_production import assembly_ai_cli, dolby_cli, transcoding
 log_dir = Path("logs")
 log_dir.mkdir(parents=True, exist_ok=True)
 
-project_path = Path()
-pyproject_toml = toml.load(str(project_path / "pyproject.toml"))
-__version__ = pyproject_toml["tool"]["poetry"]["version"]
-
 app = typer.Typer()
 app.command()(dolby_cli.enhance)
 app.command()(assembly_ai_cli.transcribe)
